@@ -20,14 +20,14 @@ services:
         sparkler_net:
           ipv4_address: 172.200.0.2
     sparkler:
-      image: sparkler
+      image: "sujenshah/sce-sparkler"
       ports:
         - "8983:8983"
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.3
     domain-discovery:
-      image: "domain-discovery"
+      image: "sujenshah/sce-domain-explorer"
       ports:
         - "5000:5000"
       networks:
