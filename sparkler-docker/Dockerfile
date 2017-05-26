@@ -43,6 +43,7 @@ WORKDIR /data
 # Copies sparkler
 # ADD ./ /data/sparkler
 RUN git clone https://github.com/USCDataScience/sparkler /data/sparkler
+RUN cd sparkler && git checkout memex-dd
 
 # Setup Solr
 RUN wget http://archive.apache.org/dist/lucene/solr/6.2.1/solr-6.2.1.tgz -O /data/solr.tgz && \
@@ -69,6 +70,7 @@ RUN cp -r /data/sparkler/sparkler-ui/sparkler-dashboard /data/solr/server/solr-w
 
 RUN apt-get update && apt-get install -y --fix-missing openjfx  # needed by the Jbrowser
 
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Define default command.
 #CMD ["/data/solr/bin/solr", "start", "|", "tail", "-f", "/dev/null"]
