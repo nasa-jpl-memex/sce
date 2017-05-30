@@ -26,6 +26,7 @@ services:
       volumes:
         - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data
         - ../data/crawl-segments:/data/sparkler/crawl-segments
+        - ../data/dumper/dump:/data/sparkler/dump
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.3

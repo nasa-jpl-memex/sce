@@ -61,7 +61,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 mkdir -p $DIR/data/solr/crawldb/data
 mkdir -p $DIR/data/crawl-segments
-mkdir -p $DIR/data/dumper
+mkdir -p $DIR/data/dumper/dump
 
 cd $DIR/$SPARKLER
 

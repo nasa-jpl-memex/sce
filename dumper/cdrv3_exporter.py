@@ -110,6 +110,7 @@ def main(config):
                 fw.write(json.dumps(cdr_doc, encoding='utf-8') + "\n")
             except:
                 print "Error writing {}".format(parent_id)
+    print("Export complete")
 
 
 if __name__ == '__main__':
