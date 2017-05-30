@@ -16,7 +16,7 @@ def scroll_and_get_results(solr, q, **kwargs):
         hits = result.hits
         if hits == 0:
             break
-        results.append(result.docs[0])
+        results += result.docs
         start +=rows
     return results
 
