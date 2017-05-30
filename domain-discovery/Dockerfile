@@ -30,5 +30,11 @@ WORKDIR /projects/domain-discovery/webui
 RUN git pull --all && git checkout memex-dd
 RUN pip install -r requirements.txt
 
+
+# Set up CDR dumper for MEMEX Domain Discovery
+WORKDIR /projects
+RUN git clone https://github.com/sujen1412/sce.git && pip install pysolr
+
+WORKDIR /projects/domain-discovery/webui
 CMD ["python", "run.py"]
 

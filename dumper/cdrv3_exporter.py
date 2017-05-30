@@ -2,7 +2,6 @@ import pysolr
 import json
 import re
 from datetime import datetime
-from elasticsearch import Elasticsearch
 import argparse
 import os
 
@@ -97,7 +96,7 @@ def main(config):
     print("Starting output dump")
 
     parent_ids = get_parent_id(solr)
-    dump_file = "crawl-data-dump.jsonl"
+    dump_file = os.path.join("../data/dumper", "crawl-data-dump.jsonl")
     if os.path.exists(dump_file):
         os.rename(dump_file, "{}.old".format(dump_file))
     with open(dump_file, 'w') as fw:
@@ -118,11 +117,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     default = os.path.join(os.path.dirname(os.path.realpath(__file__)),"dumper.config")
     parser.add_argument("--config_file", help="JSON Configuration file", default=default)
-    parser.add_argument("--outlinks", default=False)
     args = parser.parse_args()
     config = {}
     with open(args.config_file, 'r') as f:
         config = json.load(f)
 
     main(config)
-

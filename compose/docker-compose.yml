@@ -23,6 +23,9 @@ services:
       image: "sujenshah/sce-sparkler"
       ports:
         - "8983:8983"
+      volumes:
+        - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data
+        - ../data/crawl-segments:/data/sparkler/crawl-segments
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.3
@@ -30,6 +33,8 @@ services:
       image: "sujenshah/sce-domain-explorer"
       ports:
         - "5000:5000"
+      volumes:
+        - ../data/dumper:/projects/sce/data/dumper
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.4
