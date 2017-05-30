@@ -19,7 +19,7 @@
 # Usage      : ./kickstart.sh
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 05-25-2017 [MM-DD-YYYY]
-# Last Edited: 05-25-2017, Sujen Shah
+# Last Edited: 05-30-2017, Sujen Shah
 # Description: This script automatically builds the docker containers, pulls 
 #              the firefox engine and then performs the docker compose tool for 
 #              defining and running the multi-container application that allow 
@@ -58,6 +58,10 @@ FIREFOX="selenium/standalone-firefox-debug"
 
 # Full directory name of the script no matter where it is being called from
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+mkdir -p $DIR/data/solr/crawldb/data
+mkdir -p $DIR/data/crawl-segments
+mkdir -p $DIR/data/dumper
 
 cd $DIR/$SPARKLER
 
