@@ -54,10 +54,7 @@ RUN apt-get -y install lsof
 RUN /data/solr/bin/solr start && \
     /data/solr/bin/solr create_core -c crawldb -d /data/sparkler/conf/solr/crawldb/ && \
     /data/solr/bin/solr stop
-RUN cd /data/sparkler/sparkler-ui/banana && \
-    git submodule init && \
-    git submodule update && \
-    cd /data/sparkler/sparkler-ui/ && mvn clean package
+RUN cd /data/sparkler/sparkler-ui/ && mvn clean package
 
 
 RUN export MAVEN_OPTS="-Xmx2g -Xss1g -XX:MaxPermSize=2g -XX:+CMSClassUnloadingEnabled"&& \
