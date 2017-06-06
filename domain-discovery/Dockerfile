@@ -33,7 +33,7 @@ RUN pip install -r requirements.txt
 
 # Set up CDR dumper for MEMEX Domain Discovery
 WORKDIR /projects
-RUN git clone https://github.com/sujen1412/sce.git && pip install pysolr
+RUN git clone https://github.com/memex-explorer/sce.git && pip install pysolr
 
 WORKDIR /projects/domain-discovery/webui
 CMD ["python", "run.py"]
