@@ -15,32 +15,94 @@
 # limitations under the License.
 
 #
-# Script     : kickstart.sh 
-# Usage      : ./kickstart.sh
+# Script     : kickstart.sh
+# Usage      : ./kickstart.sh [-up | -stop | -start | -down] [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 05-25-2017 [MM-DD-YYYY]
-# Last Edited: 05-30-2017, Sujen Shah
+# Last Edited: 06-08-2017, Giuseppe Totaro
 # Description: This script automatically builds the docker containers, pulls 
 #              the firefox engine and then performs the docker compose tool for 
-#              defining and running the multi-container application that allow 
+#              defining and running the multi-container application that allows 
 #              Sparkler Crawl Environment to be used by a Subject Matter Expert.
 # Notes      : This script is included in the following repository:
-#              https://github.com/sujen1412/sce
+#              https://github.com/memex-explorer/sce
 #
 
 function print_usage() {
-	echo "Usage: $0 -l path/to/log"
-	printf "\n\t-l <dir>, --log-file <dir>\n\t\tPath to the log file. If it is not specified, the script writes out everything on the standard output."
+	echo "Usage: $0 [-up | -stop | -start | -down] [-l /path/to/log]"
+	printf "\n\t-down\n\t\tStops containers and removes containers, networks, volumes, and images created by docker-compose up.\n"
+	printf "\n\t-stop\n\t\tStops running containers without removing them. They can be started again with docker-compose start.\n"
+	printf "\n\t-start\n\t\tStarts existing containers for a service.\n"
+	printf "\n\t-up\n\t\tBuilds, (re)creates, starts, and attaches to containers for a service (default command).\n"
+	printf "\n\t-l <dir>, --log-file <dir>\n\t\tPath to the log file. If it is not specified, the script writes out everything on the standard output.\n"
 }
 
-LOG_FILE=/dev/stdout
+function compose_up() {
+	mkdir -p $DIR/data/solr/crawldb/data
+	mkdir -p $DIR/data/crawl-segments
+	mkdir -p $DIR/data/dumper/dump
+	
+	cd $DIR/$SPARKLER
+	
+	#TODO Move these builds from sujenshah to a Memex registry
+	
+	docker pull sujenshah/sce-sparkler > $LOG_FILE 2>&1
+	
+	cd $DIR/$DD
+	
+	docker pull sujenshah/sce-domain-explorer > $LOG_FILE 2>&1
+	
+	#TODO perform docker build in background and check for docker images installed
+	
+	docker pull $FIREFOX > $LOG_FILE 2>&1
+	
+	cd $DIR
+	cd $COMPOSE
+	
+	# Running docker-compose up -d starts the containers in the background and leaves them running
+	docker-compose up -d > $LOG_FILE 2>&1
+	
+	sparkler_id=$(docker ps -q -f "name=compose_sparkler_1")
+	dd_id=$(docker ps -q -f "name=compose_domain-discovery_1")
+	firefox_id=$(docker ps -q -f "name=compose_firefox_1")
+	
+	[[ -z $sparkler_id ]] && echo "An error occurred while starting the sparkler container!" || echo "The sparkler container is started with id ${sparkler_id}"
+	[[ -z $dd_id ]] && echo "An error occurred while starting the domain-discovery container!" || echo "The domain-discovery container is started with id ${dd_id}"
+	[[ -z $firefox_id ]] && echo "An error occurred while starting the firefox container!" || echo "The firefox container is started with id ${firefox_id}"
+	
+	if [ ! -z $sparkler_id ] && [ ! -z $dd_id ] && [ ! -z $firefox_id ]
+	then
+		echo "All the Docker containers for Sparkler CE are properly running!"
+	fi
+}
+
+function compose_down() {
+	cd $DIR/$COMPOSE
+	docker-compose down > $LOG_FILE 2>&1
+}
+
+function compose_stop() {
+	cd $DIR/$COMPOSE
+	echo "Stopping running containers without removing them. They can be started again with docker-compose start."
+	docker-compose stop > $LOG_FILE 2>&1
+}
+
+function compose_start() {
+	cd $DIR/$COMPOSE
+	echo "Starting existing containers for a service."
+	docker-compose start > $LOG_FILE 2>&1
+}
+
 
 while [ ! -z $1 ]
 do
 	case $1 in
+		-up|-stop|-start|-down)
+			[[ ! -z $CMD ]] && { echo "Error: you can run only one action among up, stop, start, and down!"; print_usage; exit 1; } 
+			CMD="${1:1}"
+			;;
 		-l|--log-file)
 			LOG_FILE="$2"
-			echo $LOG_FILE
 			shift
 			;;
 			*)
@@ -51,33 +113,51 @@ do
 	shift
 done
 
+[[ -z $CMD ]] && CMD="up"
+[[ -z $LOG_FILE ]] && LOG_FILE="/dev/stdout"
 SPARKLER="sparkler-docker"
 DD="domain-discovery"
 COMPOSE="compose"
 FIREFOX="selenium/standalone-firefox-debug"
 
-# Full directory name of the script no matter where it is being called from
+## Full directory name of the script no matter where it is being called from
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-mkdir -p $DIR/data/solr/crawldb/data
-mkdir -p $DIR/data/crawl-segments
-mkdir -p $DIR/data/dumper/dump
-
-cd $DIR/$SPARKLER
-
-#TODO Move these builds from sujenshah to a Memex registry
-
-docker pull sujenshah/sce-sparkler > $LOG_FILE 2>&1
-
-cd $DIR/$DD
-
-docker pull sujenshah/sce-domain-explorer > $LOG_FILE 2>&1
-
-#TODO perform docker build in background and check for docker images installed
-
-docker pull $FIREFOX > $LOG_FILE 2>&1
-
-cd $DIR
-cd $COMPOSE
-
-docker-compose up > $LOG_FILE 2>&1
+eval "compose_${CMD}"
+#
+#mkdir -p $DIR/data/solr/crawldb/data
+#mkdir -p $DIR/data/crawl-segments
+#mkdir -p $DIR/data/dumper/dump
+#
+#cd $DIR/$SPARKLER
+#
+##TODO Move these builds from sujenshah to a Memex registry
+#
+#docker pull sujenshah/sce-sparkler > $LOG_FILE 2>&1
+#
+#cd $DIR/$DD
+#
+#docker pull sujenshah/sce-domain-explorer > $LOG_FILE 2>&1
+#
+##TODO perform docker build in background and check for docker images installed
+#
+#docker pull $FIREFOX > $LOG_FILE 2>&1
+#
+#cd $DIR
+#cd $COMPOSE
+#
+## Running docker-compose up -d starts the containers in the background and leaves them running
+#docker-compose up -d > $LOG_FILE 2>&1
+#
+#sparkler_id=$(docker ps -q -f "name=compose_sparkler_1")
+#dd_id=$(docker ps -q -f "name=compose_domain-discovery_1")
+#firefox_id=$(docker ps -q -f "name=compose_firefox_1")
+#
+#[[ -z $sparkler_id ]] && echo "An error occurred while starting the sparkler container!" || echo "The sparkler container is started with id ${sparkler_id}"
+#[[ -z $dd_id]] && echo "An error occurred while starting the domain-discovery container!" || echo "The domain-discovery container is started with id ${dd_id}"
+#[[ -z $firefox_id ]] && echo "An error occurred while starting the firefox container!" || echo "The firefox container is started with id ${firefox_id}"
+#
+#if [ ! -z $sparkler_id ] && [ ! -z $dd_id ] && [ ! -z $firefox_id ]
+#then
+#	echo "All the Docker containers for Sparkler CE are properly running!"
+#fi
