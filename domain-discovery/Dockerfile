@@ -18,16 +18,17 @@ RUN \
 # Define commonly used JAVA_HOME variable
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 
-RUN apt-get update && apt-get install -y git maven emacs-nox
+RUN apt-get update && apt-get install -y git maven
 
-RUN git clone https://github.com/memex-explorer/sce-domain-discovery.git
+RUN git clone https://github.com/memex-explorer/sce-domain-discovery.git /projects/domain-discovery && \
+    git pull --all && \
+    git checkout memex-dd
 
 RUN apt-get install -y python && \
     apt-get install -y python-setuptools python-dev build-essential && \
     easy_install pip
 
 WORKDIR /projects/domain-discovery/webui
-RUN git pull --all && git checkout memex-dd
 RUN pip install -r requirements.txt
 
 
