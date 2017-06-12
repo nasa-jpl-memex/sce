@@ -21,8 +21,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 RUN apt-get update && apt-get install -y git maven
 
 RUN git clone https://github.com/memex-explorer/sce-domain-discovery.git /projects/domain-discovery && \
-    git pull --all && \
-    git checkout memex-dd
+    cd /projects/domain-discovery && git checkout memex-dd
 
 RUN apt-get install -y python && \
     apt-get install -y python-setuptools python-dev build-essential && \
