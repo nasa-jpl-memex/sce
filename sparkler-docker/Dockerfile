@@ -43,7 +43,7 @@ WORKDIR /data
 # Copies sparkler
 # ADD ./ /data/sparkler
 RUN git clone https://github.com/USCDataScience/sparkler /data/sparkler
-RUN cd sparkler && git checkout memex-dd
+RUN cd sparkler && git pull --all && git checkout memex-dd
 
 # Setup Solr
 RUN wget http://archive.apache.org/dist/lucene/solr/6.2.1/solr-6.2.1.tgz -O /data/solr.tgz && \
