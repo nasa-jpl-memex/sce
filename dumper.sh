@@ -52,7 +52,9 @@ done
 # Full directory name of the script no matter where it is being called from
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+docker exec compose_domain-discovery_1 python /projects/sce/dumper/cdrv3_exporter.py
+
 for dir in $(ls ${DIR}/data/crawl-segments/)
 do
-	docker exec compose_sparkler_1 ./sparkler/bin/sparkler.sh dump -i /data/sparkler/crawl-segments/${dir##*/} -o /data/sparkler/dump/dump-${dir##*/} > $LOG_FILE 2>&1
+	docker exec compose_sparkler_1 ./sparkler/bin/sparkler.sh dump -i /data/crawl-segments/${dir##*/} -o /data/sparkler/dump/dump-${dir##*/} > $LOG_FILE 2>&1
 done
