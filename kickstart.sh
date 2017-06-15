@@ -19,7 +19,7 @@
 # Usage      : ./kickstart.sh [-up | -stop | -start | -down] [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 05-25-2017 [MM-DD-YYYY]
-# Last Edited: 06-13-2017, Giuseppe Totaro
+# Last Edited: 06-14-2017, Giuseppe Totaro
 # Description: This script automatically builds the docker containers, pulls 
 #              the firefox engine and then performs the docker compose tool for 
 #              defining and running the multi-container application that allows 
@@ -199,10 +199,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -z $LOG_FILE ]
 then 
 	mkdir -p $DIR/logs
-	LOG_FILE="$DIR/logs/sce.log"
+	LOG_FILE="$DIR/logs/kickstart.log"
 	[[ -f $LOG_FILE ]] && mv "$LOG_FILE" "$LOG_FILE.$(date +%Y%m%d)"
 fi
 
-echo "The installation process has been started. All the log messages will be reported to $LOG_FILE"
+echo "The installation process of Sparkler CE has been started. All the log messages will be reported to $LOG_FILE"
 
 eval "compose_${CMD}"

@@ -19,7 +19,7 @@
 # Usage      : ./sce.sh -sf /path/to/seed -i num_iterations -id job_id [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 06-28-2017 [MM-DD-YYYY]
-# Last Edited: 06-08-2017, Giuseppe Totaro
+# Last Edited: 06-14-2017, Giuseppe Totaro
 # Description: This script allows to inject a seed file into Sparkler and then 
 #              crawl the URLs through the Docker container.
 # Notes      : This script is included in the following repository:
@@ -83,13 +83,26 @@ fi
 
 if [ -z $JOB_ID ]
 then
-	echo "Error: you must provide a job identifier."
-	print_usage
+	echo "The name of the seed file will be used as job identifier."
+	seed_filename=$(basename $SEED)
+	JOB_ID=${seed_filename%.*}
 	exit 1
 fi
 
-docker cp $SEED $(docker ps -a -q --filter="name=compose_sparkler_1"):/data/seed_$(basename $SEED)
+## Full directory name of the script no matter where it is being called from
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh inject -sf /data/seed_$(basename $SEED) -id $JOB_ID
+if [ -z $LOG_FILE ]
+then 
+	mkdir -p $DIR/logs
+	LOG_FILE="$DIR/logs/sce.log"
+	[[ -f $LOG_FILE ]] && mv "$LOG_FILE" "$LOG_FILE.$(date +%Y%m%d)"
+fi
 
-docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID
+echo "The crawl job has been started. All the log messages will be reported to $LOG_FILE"
+
+docker cp $SEED $(docker ps -a -q --filter="name=compose_sparkler_1"):/data/seed_$(basename $SEED) >> $LOG_FILE 2>&1
+
+docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh inject -sf /data/seed_$(basename $SEED) -id $JOB_ID >> $LOG_FILE 2>&1
+
+docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID >> $LOG_FILE 2>&1
