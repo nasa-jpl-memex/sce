@@ -108,7 +108,7 @@ def main(config, is_es_format=False):
     print("Starting output dump")
 
     parent_ids = get_parent_id(solr)
-    dump_file = os.path.join("../data/dumper", "crawl-data-dump.jsonl")
+    dump_file = os.path.join("/projects/sce/data/dumper", "crawl-data-dump.jsonl")
     if os.path.exists(dump_file):
         os.rename(dump_file, "{}.old".format(dump_file))
     with open(dump_file, 'w') as fw:
