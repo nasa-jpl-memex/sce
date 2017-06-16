@@ -27,7 +27,7 @@
 #
 
 function print_usage() {
-	echo "Usage: $0 -sf /path/to/seed [inject] [-i num_iterations] [-tg num_groups] [-id job_id] [-l /path/to/log]"
+	echo "Usage: $0 -sf /path/to/seed [inject | kill] [-i num_iterations] [-tg num_groups] [-id job_id] [-l /path/to/log]"
 	printf "\n\t-sf\n\t\tPath to the seed file.\n"
 	printf "\n\t-i\n\t\tNumber of iterations to run.\n"
 	printf "\n\t-tg\n\t\tMax groups to be selected for fetching.\n"
@@ -36,6 +36,7 @@ function print_usage() {
 }
 
 function sigint_handler() {
+	CRAWL=false
 	echo "It may take up to 30 minutes to stop gracefully the crawl job."
 	printf "\nDo you want to force stop crawl? [y/n or Y/N, default is N] "
         local answer=""
@@ -44,7 +45,7 @@ function sigint_handler() {
                 read -n 1 -s answer
                 case $answer in
                         [yY])
-                                docker exec compose_sparkler_1 bash -c 'ps -elf | grep sparkler | grep -v grep | awk '"'"'{print $4}'"'"' | xargs -Ipid echo pid'
+                                docker exec compose_sparkler_1 bash -c 'ps -elf | grep sparkler | grep -v grep | awk '"'"'{print $4}'"'"' | xargs -Ipid kill -9 pid'
                                 break
                                 ;;  
                         [nN]|"")
@@ -57,10 +58,9 @@ function sigint_handler() {
                                 ;;  
                 esac
         done
-
 }
 
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
 	print_usage
 	exit 1
@@ -73,6 +73,10 @@ GROUPS=12
 while [ ! -z $1 ]
 do
 	case $1 in
+		kill)
+			sigint_handler
+			exit 0
+			;;
 		inject)
 			INJECT="inject"
 			;;
@@ -136,11 +140,12 @@ docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh inject -sf /data/s
 
 [[ $INJECT == "inject" ]] && exit 0
 
+CRAWL=true
 trap sigint_handler SIGINT
 
-while [ $CRAWL == true ]
+while [ $CRAWL = true ]
 do
 	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
 done
 
-echo "The crawl job has been stopped. All the log messages have been reported to $LOG_FILE"
+printf "\nThe crawl job has been stopped. All the log messages have been reported to $LOG_FILE\n"
