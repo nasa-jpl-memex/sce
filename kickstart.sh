@@ -19,7 +19,7 @@
 # Usage      : ./kickstart.sh [-up | -stop | -start | -down] [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 05-25-2017 [MM-DD-YYYY]
-# Last Edited: 06-14-2017, Giuseppe Totaro
+# Last Edited: 06-15-2017, Giuseppe Totaro
 # Description: This script automatically builds the docker containers, pulls 
 #              the firefox engine and then performs the docker compose tool for 
 #              defining and running the multi-container application that allows 
@@ -68,7 +68,7 @@ function docker_compose_conf() {
 	echo "    firefox:"
 	echo "      image: \"selenium/standalone-firefox-debug\""
 	echo "      ports:"
-	echo "        - \"$FIREFOX_PORT:$FIREFOX_PORT\""
+	echo "        - \"$FIREFOX_PORT:4444\""
 	echo "        - \"$VNC_PORT:5900\""
 	echo "      networks:"
 	echo "        sparkler_net:"
@@ -76,7 +76,7 @@ function docker_compose_conf() {
 	echo "    sparkler:"
 	echo "      image: \"sujenshah/sce-sparkler\""
 	echo "      ports:"
-	echo "        - \"$SOLR_PORT:$SOLR_PORT\""
+	echo "        - \"$SOLR_PORT:8983\""
 	echo "      volumes:"
 	echo "        - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data"
 	echo "        - ../data/crawl-segments:/data/sparkler/crawl-segments"
@@ -87,7 +87,7 @@ function docker_compose_conf() {
 	echo "    domain-discovery:"
 	echo "      image: \"sujenshah/sce-domain-explorer\""
 	echo "      ports:"
-	echo "        - \"$DD_PORT:$DD_PORT\""
+	echo "        - \"$DD_PORT:5000\""
 	echo "      volumes:"
 	echo "        - ../data/dumper:/projects/sce/data/dumper"
 	echo "      networks:"
@@ -102,31 +102,31 @@ function compose_up() {
 	
 	cd $DIR/$SPARKLER
 	
-	docker pull sujenshah/sce-sparkler >> $LOG_FILE 2>&1
+	docker pull sujenshah/sce-sparkler 2>&1 | tee -a $LOG_FILE 
 	
 	cd $DIR/$DD
 	
-	docker pull sujenshah/sce-domain-explorer >> $LOG_FILE 2>&1
+	docker pull sujenshah/sce-domain-explorer 2>&1 | tee -a $LOG_FILE
 	
-	docker pull $FIREFOX >> $LOG_FILE 2>&1
+	docker pull $FIREFOX  2>&1 | tee -a $LOG_FILE
 	
 	cd $DIR
 	cd $COMPOSE
 	
 	# Test if default ports are available
 	SOLR_PORT=$(find_port $SOLR_PORT)
-	echo "SOLR_PORT=$SOLR_PORT" >> $LOG_FILE 2>&1
+	echo "SOLR_PORT=$SOLR_PORT" 2>&1 | tee -a $LOG_FILE
 	DD_PORT=$(find_port $DD_PORT)
-	echo "DD_PORT=$DD_PORT" >> $LOG_FILE 2>&1
+	echo "DD_PORT=$DD_PORT" 2>&1 | tee -a $LOG_FILE
 	FIREFOX_PORT=$(find_port $FIREFOX_PORT)
-	echo "FIREFOX_PORT=$FIREFOX_PORT" >> $LOG_FILE 2>&1
+	echo "FIREFOX_PORT=$FIREFOX_PORT" 2>&1 | tee -a $LOG_FILE
 	VNC_PORT=$(find_port $VNC_PORT)
-	echo "VNC_PORT=$VNC_PORT" >> $LOG_FILE 2>&1
+	echo "VNC_PORT=$VNC_PORT" 2>&1 | tee -a $LOG_FILE
 
 	docker_compose_conf > docker-compose.yml
 
 	# Running docker-compose up -d starts the containers in the background and leaves them running
-	docker-compose up -d >> $LOG_FILE 2>&1
+	docker-compose up -d 2>&1 | tee -a $LOG_FILE
 	
 	local sparkler_id=$(docker ps -q -f "name=compose_sparkler_1")
 	local dd_id=$(docker ps -q -f "name=compose_domain-discovery_1")
@@ -139,27 +139,27 @@ function compose_up() {
 	
 	if [ ! -z $sparkler_id ] && [ ! -z $dd_id ] && [ ! -z $firefox_id ]
 	then
-		echo "All the Docker containers for Sparkler CE are properly running!"
-		echo "The Solr instance is available on http://0.0.0.0:${SOLR_PORT}"
-		echo "The DD explorer is available on http://0.0.0.0:${DD_PORT}"
+		echo "All the Docker containers for Sparkler CE are properly running!" | tee -a $LOG_FILE
+		echo "The Solr instance is available on http://0.0.0.0:${SOLR_PORT}" | tee -a $LOG_FILE
+		echo "The DD explorer is available on http://0.0.0.0:${DD_PORT}" | tee -a $LOG_FILE
 	fi
 }
 
 function compose_down() {
 	cd $DIR/$COMPOSE
-	docker-compose down >> $LOG_FILE 2>&1
+	docker-compose down 2>&1 | tee -a $LOG_FILE
 }
 
 function compose_stop() {
 	cd $DIR/$COMPOSE
-	echo "Stopping running containers without removing them. They can be started again with docker-compose start."
-	docker-compose stop >> $LOG_FILE 2>&1
+	echo "Stopping running containers without removing them. They can be started again with docker-compose start." | tee -a $LOG_FILE
+	docker-compose stop 2>&1 | tee -a $LOG_FILE
 }
 
 function compose_start() {
 	cd $DIR/$COMPOSE
-	echo "Starting existing containers for a service."
-	docker-compose start >> $LOG_FILE 2>&1
+	echo "Starting existing containers for a service." | tee -a $LOG_FILE
+	docker-compose start 2>&1 | tee -a $LOG_FILE
 }
 
 while [ ! -z $1 ]
@@ -200,9 +200,9 @@ if [ -z $LOG_FILE ]
 then 
 	mkdir -p $DIR/logs
 	LOG_FILE="$DIR/logs/kickstart.log"
-	[[ -f $LOG_FILE ]] && mv "$LOG_FILE" "$LOG_FILE.$(date +%Y%m%d)"
+	[[ -f $LOG_FILE ]] && cat "$LOG_FILE" >> "$LOG_FILE.$(date +%Y%m%d)"
 fi
 
-echo "The installation process of Sparkler CE has been started. All the log messages will be reported to $LOG_FILE"
+echo "The installation process of Sparkler CE has been started. All the log messages will be reported also to $LOG_FILE"
 
 eval "compose_${CMD}"
