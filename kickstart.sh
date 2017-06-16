@@ -79,7 +79,7 @@ function docker_compose_conf() {
 	echo "        - \"$SOLR_PORT:8983\""
 	echo "      volumes:"
 	echo "        - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data"
-	echo "        - ../data/crawl-segments:/data/sparkler/crawl-segments"
+	echo "        - ../data/crawl-segments:/data/crawl-segments"
 	echo "        - ../data/dumper/dump:/data/sparkler/dump"
 	echo "      networks:"
 	echo "        sparkler_net:"

@@ -35,6 +35,9 @@ RUN pip install -r requirements.txt
 WORKDIR /projects
 RUN git clone https://github.com/memex-explorer/sce.git && pip install pysolr
 
+RUN apt-get install -y nodejs && apt-get install -y npm && npm install elasticdump -g
+RUN pip install --upgrade awscli
+
 WORKDIR /projects/domain-discovery/webui
 CMD ["python", "run.py"]
 

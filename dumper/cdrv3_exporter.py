@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 import argparse
 import os
+import requests
 
 
 def scroll_and_get_results(solr, q, **kwargs):
@@ -89,14 +90,25 @@ def prepare_cdrjson(parent, objects):
     return cdr_json
 
 
-def main(config):
+def prepare_es_header(index, doc_type, id):
+    header = {"index":{"_index":index, "_type":doc_type, "_id":id}}
+    return header
+
+
+def upload_to_elasticsearch(data, es_url):
+    print("Uploading to elasticsearch: {}".format(es_url))
+    r = requests.post(es_url + "/_bulk", data=data)
+    print(r.text)
+
+
+def main(config, is_es_format=False):
     solr_url = "{}/{}".format(config['solr'], config['core'])
     solr = pysolr.Solr(solr_url)
 
     print("Starting output dump")
 
     parent_ids = get_parent_id(solr)
-    dump_file = os.path.join("/projects/sce/data/dumper", "crawl-data-dump.jsonl")
+    dump_file = os.path.join("../data/dumper", "crawl-data-dump.jsonl")
     if os.path.exists(dump_file):
         os.rename(dump_file, "{}.old".format(dump_file))
     with open(dump_file, 'w') as fw:
@@ -106,11 +118,18 @@ def main(config):
             cdr_doc = prepare_cdrjson(parent_doc, objects)
             # print json.dumps(cdr_doc)
             try:
+
+                if (is_es_format):
+                    header = prepare_es_header(config["es_index"], config["es_doctype"], cdr_doc["_id"])
+                    fw.write(json.dumps(header, encoding='utf-8') + "\n")
                 # Writing to file
+                del cdr_doc["_id"]
                 fw.write(json.dumps(cdr_doc, encoding='utf-8') + "\n")
             except:
                 print "Error writing {}".format(parent_id)
     print("Export complete")
+    if (is_es_format):
+        upload_to_elasticsearch(open(dump_file, 'r'), config["es_url"])
 
 
 if __name__ == '__main__':
@@ -118,9 +137,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     default = os.path.join(os.path.dirname(os.path.realpath(__file__)),"dumper.config")
     parser.add_argument("--config_file", help="JSON Configuration file", default=default)
+    parser.add_argument("-es", help="Output file in ES bulk upload format", default=False, action='store_true')
+    parser.add_argument("--es_url", help="Elasticsearch endpoint URL")
+    parser.add_argument("--es_index", help="Elasticsearch index")
+    parser.add_argument("--es_doctype", help="Elasticsearch doc type")
     args = parser.parse_args()
     config = {}
     with open(args.config_file, 'r') as f:
         config = json.load(f)
+        if (args.es):
+            config["es_url"] = args.es_url
+            config["es_index"] = args.es_index
+            config["es_doctype"] = args.es_doctype
 
-    main(config)
+    main(config, args.es)
