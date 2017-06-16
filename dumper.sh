@@ -52,9 +52,18 @@ done
 # Full directory name of the script no matter where it is being called from
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+if [ -z $LOG_FILE ]
+then 
+	mkdir -p $DIR/logs
+	LOG_FILE="$DIR/logs/dumper.log"
+	[[ -f $LOG_FILE ]] && cat "$LOG_FILE" >> "$LOG_FILE.$(date +%Y%m%d)"
+fi
+
 docker exec compose_domain-discovery_1 python /projects/sce/dumper/cdrv3_exporter.py
+
+echo "The dump of segments has been started. All the log messages will be reported also to $LOG_FILE"
 
 for dir in $(ls ${DIR}/data/crawl-segments/)
 do
-	docker exec compose_sparkler_1 ./sparkler/bin/sparkler.sh dump -i /data/crawl-segments/${dir##*/} -o /data/sparkler/dump/dump-${dir##*/} > $LOG_FILE 2>&1
+	docker exec compose_sparkler_1 ./sparkler/bin/sparkler.sh dump -i /data/crawl-segments/${dir##*/} -o /data/sparkler/dump/dump-${dir##*/} 2>&1 | tee -a $LOG_FILE
 done
