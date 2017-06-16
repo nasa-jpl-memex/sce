@@ -19,7 +19,7 @@
 # Usage      : ./sce.sh -sf /path/to/seed -i num_iterations -id job_id [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 06-28-2017 [MM-DD-YYYY]
-# Last Edited: 06-14-2017, Giuseppe Totaro
+# Last Edited: 06-15-2017, Giuseppe Totaro
 # Description: This script allows to inject a seed file into Sparkler and then 
 #              crawl the URLs through the Docker container.
 # Notes      : This script is included in the following repository:
@@ -27,28 +27,65 @@
 #
 
 function print_usage() {
-	echo "Usage: $0 -sf /path/to/seed -i num_iterations -id job_id [-l /path/to/log]"
+	echo "Usage: $0 -sf /path/to/seed [inject] [-i num_iterations] [-tg num_groups] [-id job_id] [-l /path/to/log]"
 	printf "\n\t-sf\n\t\tPath to the seed file.\n"
 	printf "\n\t-i\n\t\tNumber of iterations to run.\n"
+	printf "\n\t-tg\n\t\tMax groups to be selected for fetching.\n"
 	printf "\n\t-id\n\t\tJob identifier.\n"
 	printf "\n\t-l <dir>, --log-file <dir>\n\t\tPath to the log file. If it is not specified, the script writes out everything on the standard output.\n"
 }
 
-if [ $# -lt 6 ]
+function sigint_handler() {
+	echo "It may take up to 30 minutes to stop gracefully the crawl job."
+	printf "\nDo you want to force stop crawl? [y/n or Y/N, default is N] "
+        local answer=""
+        while [ -z $answer ]
+        do
+                read -n 1 -s answer
+                case $answer in
+                        [yY])
+                                docker exec compose_sparkler_1 bash -c 'ps -elf | grep sparkler | grep -v grep | awk '"'"'{print $4}'"'"' | xargs -Ipid echo pid'
+                                break
+                                ;;  
+                        [nN]|"")
+                                break
+				echo "The crawl job should stop within 30 minutes!"
+                                ;;  
+                        *)  
+                                printf "\nPlease answer y/n or Y/N (or leave blank): "
+                                answer=""
+                                ;;  
+                esac
+        done
+
+}
+
+if [ $# -lt 2 ]
 then
 	print_usage
 	exit 1
 fi
 
+INJECT=""
+ITERATIONS=10
+GROUPS=12
+
 while [ ! -z $1 ]
 do
 	case $1 in
+		inject)
+			INJECT="inject"
+			;;
 		-sf)
 			SEED="$2"
 			shift
 			;;
 		-i)
 			ITERATIONS="$2"
+			shift
+			;;
+		-tg)
+			GROUPS="$2"
 			shift
 			;;
 		-id)
@@ -74,19 +111,11 @@ then
 	exit 1
 fi
 
-if [ -z $ITERATIONS ]
-then
-	echo "Error: you must provide the number of iterations."
-	print_usage
-	exit 1
-fi
-
 if [ -z $JOB_ID ]
 then
 	echo "The name of the seed file will be used as job identifier."
 	seed_filename=$(basename $SEED)
-	JOB_ID=${seed_filename%.*}
-	exit 1
+	JOB_ID=${seed_filename%.*}-$(date +%Y%m%d)
 fi
 
 ## Full directory name of the script no matter where it is being called from
@@ -101,8 +130,17 @@ fi
 
 echo "The crawl job has been started. All the log messages will be reported to $LOG_FILE"
 
-docker cp $SEED $(docker ps -a -q --filter="name=compose_sparkler_1"):/data/seed_$(basename $SEED) >> $LOG_FILE 2>&1
+docker cp $SEED $(docker ps -a -q --filter="name=compose_sparkler_1"):/data/seed_$(basename $SEED) 2>&1 | tee -a $LOG_FILE
 
-docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh inject -sf /data/seed_$(basename $SEED) -id $JOB_ID >> $LOG_FILE 2>&1
+docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh inject -sf /data/seed_$(basename $SEED) -id $JOB_ID 2>&1 | tee -a $LOG_FILE
 
-docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID >> $LOG_FILE 2>&1
+[[ $INJECT == "inject" ]] && exit 0
+
+trap sigint_handler SIGINT
+
+while [ $CRAWL == true ]
+do
+	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
+done
+
+echo "The crawl job has been stopped. All the log messages have been reported to $LOG_FILE"
