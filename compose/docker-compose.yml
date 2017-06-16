@@ -36,6 +36,9 @@ services:
         - "5000:5000"
       volumes:
         - ../data/dumper:/projects/sce/data/dumper
+      environment:
+        - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.4
