@@ -25,7 +25,7 @@ services:
         - "8983:8983"
       volumes:
         - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data
-        - ../data/crawl-segments:/data/sparkler/crawl-segments
+        - ../data/crawl-segments:/data/crawl-segments
         - ../data/dumper/dump:/data/sparkler/dump
       networks:
         sparkler_net:
