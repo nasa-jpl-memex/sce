@@ -141,7 +141,7 @@ function compose_up() {
 	then
 		echo "All the Docker containers for Sparkler CE are properly running!" | tee -a $LOG_FILE
 		echo "The Solr instance is available on http://0.0.0.0:${SOLR_PORT}" | tee -a $LOG_FILE
-		echo "The DD explorer is available on http://0.0.0.0:${DD_PORT}" | tee -a $LOG_FILE
+		echo "The DD explorer is available on http://0.0.0.0:${DD_PORT}/explorer" | tee -a $LOG_FILE
 	fi
 }
 
