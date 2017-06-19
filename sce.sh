@@ -19,7 +19,7 @@
 # Usage      : ./sce.sh -sf /path/to/seed -i num_iterations -id job_id [-l /path/to/log]
 # Author     : Sujen Shah, Giuseppe Totaro
 # Date       : 06-28-2017 [MM-DD-YYYY]
-# Last Edited: 06-15-2017, Giuseppe Totaro
+# Last Edited: 06-19-2017, Giuseppe Totaro
 # Description: This script allows to inject a seed file into Sparkler and then 
 #              crawl the URLs through the Docker container.
 # Notes      : This script is included in the following repository:
@@ -145,7 +145,7 @@ trap sigint_handler SIGINT
 
 while [ $CRAWL = true ]
 do
-	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
+	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -tg $GROUPS -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
 done
 
 printf "\nThe crawl job has been stopped. All the log messages have been reported to $LOG_FILE\n"
