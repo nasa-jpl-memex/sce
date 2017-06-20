@@ -68,7 +68,7 @@ fi
 
 INJECT=""
 ITERATIONS=10
-GROUPS=12
+MAX_GROUPS=12
 
 while [ ! -z $1 ]
 do
@@ -89,7 +89,7 @@ do
 			shift
 			;;
 		-tg)
-			GROUPS="$2"
+			MAX_GROUPS="$2"
 			shift
 			;;
 		-id)
@@ -145,7 +145,7 @@ trap sigint_handler SIGINT
 
 while [ $CRAWL = true ]
 do
-	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -tg $GROUPS -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
+	docker exec compose_sparkler_1 /data/sparkler/bin/sparkler.sh crawl -tg $MAX_GROUPS -i $ITERATIONS -id $JOB_ID 2>&1 | tee -a $LOG_FILE
 done
 
 printf "\nThe crawl job has been stopped. All the log messages have been reported to $LOG_FILE\n"
