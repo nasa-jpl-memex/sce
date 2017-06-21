@@ -37,6 +37,7 @@ function print_usage() {
 	printf "\n\t-l <dir>, --log-file <dir>\n\t\tPath to the log file. If it is not specified, the script writes out everything on the standard output.\n"
 }
 
+# NOTE: Currently, this function is not necessary.
 function find_port() {
 	local port_number=$1
 	while [ $(lsof -i :$port_number | wc -l) -ne 0 ]
@@ -47,6 +48,8 @@ function find_port() {
 	echo $port_number
 }
 
+# NOTE: Currently, this function is not necessary as we are using a static 
+# configuration file.
 # Create a new docker-compose.yml file based on the available ports. We do not 
 # use environment variables because the script can be executed from other 
 # terminals whereas the variables would be set only for the current shell and 
@@ -114,16 +117,16 @@ function compose_up() {
 	cd $COMPOSE
 	
 	# Test if default ports are available
-	SOLR_PORT=$(find_port $SOLR_PORT)
-	echo "SOLR_PORT=$SOLR_PORT" 2>&1 | tee -a $LOG_FILE
-	DD_PORT=$(find_port $DD_PORT)
-	echo "DD_PORT=$DD_PORT" 2>&1 | tee -a $LOG_FILE
-	FIREFOX_PORT=$(find_port $FIREFOX_PORT)
-	echo "FIREFOX_PORT=$FIREFOX_PORT" 2>&1 | tee -a $LOG_FILE
-	VNC_PORT=$(find_port $VNC_PORT)
-	echo "VNC_PORT=$VNC_PORT" 2>&1 | tee -a $LOG_FILE
+	#SOLR_PORT=$(find_port $SOLR_PORT)
+	#echo "SOLR_PORT=$SOLR_PORT" 2>&1 | tee -a $LOG_FILE
+	#DD_PORT=$(find_port $DD_PORT)
+	#echo "DD_PORT=$DD_PORT" 2>&1 | tee -a $LOG_FILE
+	#FIREFOX_PORT=$(find_port $FIREFOX_PORT)
+	#echo "FIREFOX_PORT=$FIREFOX_PORT" 2>&1 | tee -a $LOG_FILE
+	#VNC_PORT=$(find_port $VNC_PORT)
+	#echo "VNC_PORT=$VNC_PORT" 2>&1 | tee -a $LOG_FILE
 
-	docker_compose_conf > docker-compose.yml
+	#docker_compose_conf > docker-compose.yml
 
 	# Running docker-compose up -d starts the containers in the background and leaves them running
 	docker-compose up -d 2>&1 | tee -a $LOG_FILE
@@ -203,6 +206,6 @@ then
 	[[ -f $LOG_FILE ]] && cat "$LOG_FILE" >> "$LOG_FILE.$(date +%Y%m%d)"
 fi
 
-echo "The installation process of Sparkler CE has been started. All the log messages will be reported also to $LOG_FILE"
+echo "The requested operation has been started. All the log messages will be reported also to $LOG_FILE"
 
 eval "compose_${CMD}"
