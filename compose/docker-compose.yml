@@ -23,6 +23,7 @@ services:
       image: "sujenshah/sce-sparkler"
       ports:
         - "8983:8983"
+        - "6000:6000"
       volumes:
         - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data
         - ../data/crawl-segments:/data/crawl-segments
