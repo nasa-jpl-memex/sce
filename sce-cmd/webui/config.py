@@ -23,5 +23,3 @@ SECRET_KEY = "secretDD"
 
 # Path to the uploads
 UPLOAD_FOLDER = '..'
-
-CMD_CRAWL = '/data/sparkler/bin/sce.sh -sf /data/sce-cmd/webui/seed_imported.txt'
