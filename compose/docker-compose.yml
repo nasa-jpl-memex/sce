@@ -28,6 +28,8 @@ services:
         - ../data/solr/crawldb/data:/data/solr/server/solr/crawldb/data
         - ../data/crawl-segments:/data/crawl-segments
         - ../data/dumper/dump:/data/sparkler/dump
+        - ../logs/:/data/logs
+        - ../sce-cmd/webui:/data/webui
       networks:
         sparkler_net:
           ipv4_address: 172.200.0.3
