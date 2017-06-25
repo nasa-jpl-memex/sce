@@ -75,4 +75,4 @@ RUN apt-get install -y python && \
     apt-get install -y python-setuptools python-dev build-essential && \
     easy_install pip
 
-CMD /data/solr/bin/solr start -m 6g && cd /data/webui && pip install -r requirements.txt && python run.py
+CMD /data/solr/bin/solr start -m 6g && cd /data/sce-cmd/webui && pip install -r requirements.txt && python run.py
