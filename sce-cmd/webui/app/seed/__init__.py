@@ -15,7 +15,9 @@ def upload():
         flash('No selected seed')
         return '-1'
     if seed:
-        seed.save(os.path.join(flask.current_app.root_path, flask.current_app.config['UPLOAD_FOLDER'], seed.filename))
+        seedpath = os.path.join(flask.current_app.root_path, flask.current_app.config['UPLOAD_FOLDER'], seed.filename)
+        print("Saving seed file at " + seedpath)
+        seed.save(seedpath)
         setattr(flask.current_app, 'seed', seed.filename)
     else:
         flash('An error occurred while uploading the seed file')
