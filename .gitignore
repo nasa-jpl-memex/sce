@@ -8,3 +8,5 @@ data/crawl-segments/
 data/dumper/
 
 logs/
+
+*.pyc
