@@ -151,9 +151,9 @@ if __name__ == '__main__':
     config = {}
     with open(args.config_file, 'r') as f:
         config = json.load(f)
-        if (args.es):
-            config["es_url"] = args.es_url
-            config["es_index"] = args.es_index
-            config["es_doctype"] = args.es_doctype
+        # if (args.es):
+        #     config["es_url"] = args.es_url
+        #     config["es_index"] = args.es_index
+        #     config["es_doctype"] = args.es_doctype
 
     main(config, args.es)
