@@ -15,6 +15,7 @@ def scroll_and_get_results(solr, q, **kwargs):
     while start < hits:
         result = solr.search(q=q, rows=rows, start=start, **kwargs)
         hits = result.hits
+        print "GEtting {} / {}".format(start, hits)
         if hits == 0:
             break
         results += result.docs
@@ -36,16 +37,17 @@ def get_parent(parent_id, solr):
 def get_all_objects_for_parent(parent_id, solr):
     fl = ['content_type', 'id', 'crawler', 'raw_content', '*_hd', 'fetch_timestamp', 'url',
           'relative_path']
-    fq = ['status:"FETCHED"', '!content_type:"text/html"',
+    fq = ['status:"FETCHED"', '!content_type:text*',
           'parent:{}'.format(parent_id)]
     q = "*:*"
-
+    print "GEtting objects for  {}".format(parent_id)
     return scroll_and_get_results(solr, q, **{'fq':fq, 'fl':fl})
 
 
 def get_parent_id(solr):
     fq = ['status:"FETCHED"', 'content_type:text/html']
     q = "*:*"
+    print "Getting parent ids"
     return scroll_and_get_results(solr, q, **{'fq':fq, 'fl':'id'})
 
 
@@ -111,6 +113,8 @@ def main(config, is_es_format=False):
     dump_file = os.path.join("/projects/sce/data/dumper", "crawl-data-dump.jsonl")
     if os.path.exists(dump_file):
         os.rename(dump_file, "{}.old".format(dump_file))
+    print "Found {} parents".format(len(parent_ids))
+    total = len(parent_ids)
     with open(dump_file, 'w') as fw:
         for parent_id in parent_ids:
             parent_doc = get_parent(parent_id['id'], solr)
@@ -125,11 +129,13 @@ def main(config, is_es_format=False):
                 # Writing to file
                 del cdr_doc["_id"]
                 fw.write(json.dumps(cdr_doc, encoding='utf-8') + "\n")
+                total -= 1
+                print "Remaining {}".format(total)
             except:
                 print "Error writing {}".format(parent_id)
     print("Export complete")
-    if (is_es_format):
-        upload_to_elasticsearch(open(dump_file, 'r'), config["es_url"])
+    # if (is_es_format):
+    #     upload_to_elasticsearch(open(dump_file, 'r'), config["es_url"])
 
 
 if __name__ == '__main__':
