@@ -163,8 +163,10 @@ def produce_to_kafka(config):
             print (record_metadata.topic)
             print (record_metadata.partition)
             print (record_metadata.offset)
-
-
+            if not response.is_done:
+                print "Could not post to Kafka"
+                exit(1)
+                
 
 def test_kafka(config):
     consumer = KafkaConsumer(config.get("kafka_topic"),
