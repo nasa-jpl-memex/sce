@@ -157,7 +157,9 @@ def produce_to_kafka(config):
                 _id = data.get("index").get("_id")
                 continue
             data.update({"_id":_id})
-            producer.send(topic, data)
+            response =  producer.send(topic, data)
+            print "Posted {} : {}".format(_id, response.is_done)
+
 
 
 def test_kafka(config):
