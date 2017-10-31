@@ -140,7 +140,12 @@ def main(config, is_es_format=False):
 
 def produce_to_kafka(config):
     producer = KafkaProducer(bootstrap_servers=config.get("kafka_brokers"),
-                             value_serializer=lambda m: json.dumps(m).encode('ascii'))
+                             value_serializer=lambda m: json.dumps(m).encode('ascii'),
+                             security_protocol='SSL',
+                             ssl_cafile=config.get("kafka_cafile"),
+                             ssl_certfile=config.get("kafka_certfile"),
+                             ssl_keyfile=config.get("kafka_keyfile"),
+                             ssl_check_hostname=False)
     topic = config.get("kafka_topic")
     dump_file = os.path.join("/projects/sce/data/dumper", "crawl-data-dump.jsonl")
     with open(dump_file, 'r') as f:
