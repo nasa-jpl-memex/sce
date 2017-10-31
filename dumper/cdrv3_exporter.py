@@ -5,7 +5,7 @@ from datetime import datetime
 import argparse
 import os
 import requests
-
+from kafka import KafkaConsumer, KafkaProducer
 
 def scroll_and_get_results(solr, q, **kwargs):
     results = []
@@ -138,6 +138,44 @@ def main(config, is_es_format=False):
     #     upload_to_elasticsearch(open(dump_file, 'r'), config["es_url"])
 
 
+def produce_to_kafka(config):
+    producer = KafkaProducer(bootstrap_servers=config.get("kafka_brokers"),
+                             value_serializer=lambda m: json.dumps(m).encode('ascii'))
+    topic = config.get("kafka_topic")
+    dump_file = os.path.join("/projects/sce/data/dumper", "crawl-data-dump.jsonl")
+    with open(dump_file, 'r') as f:
+        _id = ""
+        for line in f:
+            line = line.strip("\n")
+            data = json.loads(line)
+            if "index" in data:
+                _id = data.get("index").get("_id")
+                continue
+            data.update({"_id":_id})
+            producer.send(topic, data)
+
+
+def test_kafka(config):
+    consumer = KafkaConsumer(config.get("kafka_topic"),
+                             bootstrap_servers=config.get("kafka_brokers"),
+                             security_protocol='SSL',
+                             ssl_cafile=config.get("kafka_cafile"),
+                             ssl_certfile=config.get("kafka_certfile"),
+                             ssl_keyfile=config.get("kafka_keyfile"),
+                             ssl_check_hostname=False,
+                             auto_offset_reset='earliest',
+                             group_id=None)
+
+    print consumer.poll(max_records=10, timeout_ms=10000)
+    print ('Start consuming')
+    for message in consumer:
+    # message value and key are raw bytes -- decode if necessary!
+    # e.g., for unicode: `message.value.decode('utf-8')`
+        print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
+                                          message.offset, message.key,
+                                          message.value))
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -147,6 +185,12 @@ if __name__ == '__main__':
     parser.add_argument("--es_url", help="Elasticsearch endpoint URL")
     parser.add_argument("--es_index", help="Elasticsearch index")
     parser.add_argument("--es_doctype", help="Elasticsearch doc type")
+    parser.add_argument("--kafka_brokers", help="A list of kafka brokers")
+    parser.add_argument("--kafka_topic")
+    parser.add_argument("--kafka_keyfile")
+    parser.add_argument("--kafka_certfile")
+    parser.add_argument("--kafka_cafile")
+    parser.add_argument("--kafka", default=False)
     args = parser.parse_args()
     config = {}
     with open(args.config_file, 'r') as f:
@@ -157,3 +201,5 @@ if __name__ == '__main__':
         #     config["es_doctype"] = args.es_doctype
 
     main(config, args.es)
+    if args.kafka:
+        produce_to_kafka(config)
