@@ -157,8 +157,12 @@ def produce_to_kafka(config):
                 _id = data.get("index").get("_id")
                 continue
             data.update({"_id":_id})
-            response =  producer.send(topic, data)
+            response = producer.send(topic, data)
+            record_metadata = response.get(timeout=10)
             print "Posted {} : {}".format(_id, response.is_done)
+            print (record_metadata.topic)
+            print (record_metadata.partition)
+            print (record_metadata.offset)
 
 
 
